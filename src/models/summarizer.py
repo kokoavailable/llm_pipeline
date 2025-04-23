@@ -11,16 +11,11 @@ import openai
 import textwrap
 from dotenv import load_dotenv
 
-# 환경변수 로드
-load_dotenv()
-
-# OpenAI API 키 설정
-openai.api_key = os.getenv("OPENAI_API_KEY")
-
+from ..utils.helpers import logger, api_key
 class GPTSummarizer:
     """GPT를 사용한 텍스트 요약 클래스"""
 
-    def __init__(self, model="gpt-3.5-turbo"):
+    def __init__(self, model="gpt-4o-mini"):
         """
         요약기 초기화
 
@@ -28,12 +23,12 @@ class GPTSummarizer:
             model (str): 사용할 OpenAI 모델
         """
         self.model = model
-        self._check_api_key()
+        self.client = openai.OpenAI(api_key=api_key)
 
-    def _check_api_key(self):
-        """API 키 확인"""
-        if not openai.api_key:
+        if not self.client:
             logger.warning("OpenAI API 키가 설정되지 않았습니다. .env 파일을 확인하세요.")
+
+
 
     def summarize_text(self, text: str, max_retries: int = 3) -> str:
         """
@@ -69,7 +64,7 @@ class GPTSummarizer:
         
         for attempt in range(max_retries):
             try:
-                response = openai.ChatCompletion.create(
+                response = self.client.chat.completions.create(
                     model=self.model,
                     messages=[
                         {"role": "system", "content": system_prompt},
@@ -81,7 +76,7 @@ class GPTSummarizer:
                     stop=None
                 )
 
-                summary = response.choices[0].message['content'].strip()
+                summary = response.choices[0].message.content.strip()
                 return summary
             
             except Exception as e:
@@ -122,7 +117,7 @@ class GPTSummarizer:
 
         for attempt in range(max_retries):
             try:
-                response = openai.ChatCompletion.create(
+                response = self.client.chat.completions.create(
                     model=self.model,
                     messages=[
                         {"role": "system", "content": system_prompt},
@@ -132,7 +127,7 @@ class GPTSummarizer:
                     max_tokens=100
                 )
 
-                keywords_text = response['choices'][0]['message']['content'].strip()
+                keywords_text = response.choices[0].message.content.strip()
 
                 keywords = [k.strip() for k in keywords_text.split(',')]
                 return keywords
@@ -200,7 +195,7 @@ class GPTSummarizer:
         elif input_path.endswith('.json'): 
             df = pd.read_json(input_path)
         else:
-            logger.error("지원하지 않는 파일 형식: {input_path}")
+            logger.error(f"지원하지 않는 파일 형식: {input_path}")
             return None
         
         # 요약 및 키워드 추출

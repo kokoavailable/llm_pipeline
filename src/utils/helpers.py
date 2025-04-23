@@ -8,8 +8,44 @@ import logging
 from datetime import datetime
 import pandas as pd
 from typing import Dict, List, Any, Optional
+from dotenv import load_dotenv
 
+from selenium import webdriver
+from selenium.webdriver.chrome.service import Service
+from webdriver_manager.chrome import ChromeDriverManager
+import time
+from pathlib import Path
 
+# 1. 환경변수 로드
+app_env = os.getenv('APP_ENV', 'DEV')
+
+env_path = Path(__file__).resolve().parents[2] / ".env.DEV"
+load_dotenv(dotenv_path=env_path)
+
+# 2. 파일명 결정
+env_path = f"./.env.{app_env}"
+
+# 3. 해당 파일 로딩
+load_dotenv(dotenv_path=env_path)
+
+def get_cookies_from_browser(url, wait=2):
+    """
+    Selenium을 통해 특정 URL에서 쿠키를 받아오는 함수
+    """
+    driver = webdriver.Chrome(service=Service(ChromeDriverManager().install()))
+    driver.get(url)
+
+    time.sleep(wait)  # JS가 쿠키 심을 시간 기다리기
+
+    cookies = driver.get_cookies()
+    driver.quit()
+    
+    return cookies
+
+def init_session_with_cookies(session, url):
+    cookies = get_cookies_from_browser(url)
+    for cookie in cookies:
+        session.cookies.set(cookie['name'], cookie['value'])
 
 
 def setup_logging():
@@ -51,8 +87,7 @@ def setup_logging():
 
     return _logger
 
-# 로그 설정 함수 호출 싱글톤
-logger = setup_logging()
+
 
 def ensure_directory(directory_path: str) -> bool:
     """
@@ -143,3 +178,10 @@ def get_timestamp() -> str:
         str: YYYYMMDD_HHMMSS 형식의 타임스탬프
     """
     return datetime.now().strftime('%Y%m%d_%H%M%S')
+
+
+
+api_key = os.getenv("OPENAI_API_KEY")
+
+# 로그 설정 함수 호출 싱글톤
+logger = setup_logging()

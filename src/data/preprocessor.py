@@ -3,6 +3,8 @@ import logging
 from bs4 import BeautifulSoup
 import pandas as pd
 import os
+
+from ..utils.helpers import logger
 class NewsPreprocessor:
     """크롤링한 raw 뉴스 데이터를 전처리하는 클래스"""
     def __init__(self):
