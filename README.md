@@ -432,8 +432,4 @@ src/visualization/plotter.py
 crawler_config.DEV.yaml 설정 추가
 
 # 테스트
-<<<<<<< HEAD
 pytest tests/
-=======
-pytest tests/
->>>>>>> d3279192eaffdbb5827dd6bce3408b3baa9eca53
