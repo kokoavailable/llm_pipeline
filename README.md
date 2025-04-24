@@ -14,7 +14,7 @@
 아파치 에어플로우를 통해 해당파이프라인의 스케줄링과 의존성 관리 등을 자동화하였습니다.
 
 ## 디렉토리 구조
-
+```
 ├── airflow/              # 에어플로우 구성
 │   ├── dags/             # DAG 정의
 │   └── plugins/          # Airflow 플러그인
@@ -33,10 +33,11 @@
 │   ├── utils/            # 유틸리티 함수
 │   └── visualization/    # 데이터 시각화 코드
 └── tests/                # Test files
-
+```
 # 설치
 
 ## 필요 구성
+```
 파이썬 3.9 이상
 Apache Airflow 
 
@@ -122,6 +123,7 @@ websocket-client==1.8.0
 wordcloud==1.9.4
 wsproto==1.2.0
 zipp==3.21.0
+```
 
 # 설정
 1. 레포지토리 클론
