@@ -54,8 +54,11 @@ class NewsPreprocessor:
         processed_df = df.copy()
         
         # 중복 제거
+        before = len(processed_df)
         processed_df.drop_duplicates(subset=['title', 'content'], inplace=True)
-        
+        after = len(processed_df)
+        logger.info(f"🧹 중복 제거: {before - after}개 제거 → {after}개 남음")
+
         # 결측치 처리
         processed_df['title'] = processed_df['title'].fillna('')
         processed_df['content'] = processed_df['content'].fillna('')
@@ -65,8 +68,12 @@ class NewsPreprocessor:
         processed_df['content_clean'] = processed_df['content'].apply(self.clean_text)
         
         # 길이가 너무 짧은 기사 필터링
+        before = len(processed_df)
         processed_df = processed_df[processed_df['content_clean'].str.len() > 50]
-        
+        after = len(processed_df)
+        logger.info(f"50자 이하 기사 제거: {before - after}개 제거 → {after}개 남음")
+
+
         # 날짜 형식 통일
         try:
             processed_df['date'] = pd.to_datetime(processed_df['date']).dt.strftime('%Y-%m-%d')
@@ -96,27 +103,21 @@ class NewsPreprocessor:
         if not os.path.exists(input_path):
             logger.error(f"파일을 찾을 수 없음: {input_path}")
             return None
+        
             
-        # 파일 형식에 따라 읽기
-        if input_path.endswith('.csv'):
-            df = pd.read_csv(input_path)
-        elif input_path.endswith('.json'):
-            df = pd.read_json(input_path)
-        else:
-            logger.error(f"지원하지 않는 파일 형식: {input_path}")
-            return None
+
+        df = pd.read_csv(input_path)
             
         # 전처리
         processed_df = self.process_dataframe(df)
         
         # 디렉토리가 없으면 생성
         os.makedirs(os.path.dirname(output_path), exist_ok=True)
-        
         # 저장
-        if output_path.endswith('.csv'):
-            processed_df.to_csv(output_path, index=False, encoding='utf-8-sig')
-        elif output_path.endswith('.json'):
-            processed_df.to_json(output_path, orient='records', force_ascii=False, indent=4)
+        processed_df.to_csv(output_path, index=False, encoding='utf-8-sig')
+        json_path = output_path.replace('.csv', '.json')
+
+        processed_df.to_json(json_path, orient='records', force_ascii=False, indent=4)
         
         logger.info(f"전처리된 데이터 저장 완료: {output_path}")
         return processed_df

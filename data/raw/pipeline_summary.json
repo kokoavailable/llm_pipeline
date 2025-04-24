@@ -1,0 +1,12 @@
+{
+    "execution_timestamp": "2025-04-25 05:53:09",
+    "articles_collected": 361,
+    "articles_processed": 61,
+    "articles_summarized": 61,
+    "output_files": {
+        "raw_data": "/Users/koko/llm_pipeline/data/raw/news_articles.csv",
+        "processed_data": "/Users/koko/llm_pipeline/data/processed/processed_news_articles.csv",
+        "summary_data": "/Users/koko/llm_pipeline/data/summaries/news_summaries.csv",
+        "visualizations": "/Users/koko/llm_pipeline/data/visualizations"
+    }
+}

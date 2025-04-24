@@ -11,11 +11,9 @@ from collections import Counter
 from typing import List, Dict, Any, Optional, Tuple
 import re
 
-# # 한글 폰트 설정 (필요시)
-# import matplotlib.font_manager as fm
-# # 예시: font_path = '/usr/share/fonts/truetype/nanum/NanumGothic.ttf'
-# # plt.rc('font', family='NanumGothic')
+from ..utils.helpers import logger
 
+import matplotlib.font_manager as fm
 
 class NewsVisualizer:
     """뉴스 데이터 시각화 클래스"""
@@ -23,11 +21,33 @@ class NewsVisualizer:
     def __init__(self):
         """시각화 도구 초기화"""
         # 한글 폰트 설정 시도
+        self.BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+        self.PLT_FONT_PATH = os.path.join(self.BASE_DIR, 'fonts', 'NanumGothic-Bold.ttf')
+        self.CLOUD_FONT_PATH = os.path.join(self.BASE_DIR, 'fonts', 'NanumGothic-Bold.ttf')
+
+        logger.info(f"폰트 파일 경로: {self.PLT_FONT_PATH}")
+
         try:
-            plt.rc('font', family='Malgun Gothic')  # Windows
-        except:
+            if not os.path.exists(self.PLT_FONT_PATH):
+                logger.warning(f"폰트 파일을 찾을 수 없습니다: {self.PLT_FONT_PATH}")
+                raise FileNotFoundError(f"Font file not found: {self.PLT_FONT_PATH}")
+            
+            # Register font with matplotlib
+            fm.fontManager.addfont(self.PLT_FONT_PATH)
+            fm._load_fontmanager(try_read_cache=False)
+
+            # Set as default font
+            plt.rcParams['font.family'] = 'NanumGothic'
+            plt.rcParams['axes.unicode_minus'] = False
+
+            logger.info(f"폰트 설정 완료: NanumGothic")
+
+            self.font_prop = fm.FontProperties(fname=self.PLT_FONT_PATH)
+        except Exception as e:
+            logger.warning(f"폰트 설정 실패: {e}")
             try:
                 plt.rc('font', family='AppleGothic')  # macOS
+                logger.info("AppleGothic으로 대체합니다.")
             except:
                 logger.warning("기본 한글 폰트를 찾을 수 없습니다. 직접 설정이 필요할 수 있습니다.")
         
@@ -65,7 +85,7 @@ class NewsVisualizer:
             height=400, 
             background_color='white',
             max_words=100,
-            font_path=fm.findfont(fm.FontProperties(family='Malgun Gothic')),
+            font_path=self.CLOUD_FONT_PATH, # 폰트 경로
             colormap='viridis' # 색상 맵
         ).generate_from_frequencies(word_counts)
         
@@ -95,15 +115,22 @@ class NewsVisualizer:
         if 'source' not in df.columns:
             logger.warning("데이터프레임에 'source' 컬럼이 없습니다.")
             return None
+
+        df['date'] = pd.to_datetime(df['date'])
+
+        # 날짜 범위 가져오기
+        start_date = df['date'].min().strftime('%Y-%m-%d')
+        end_date = df['date'].max().strftime('%Y-%m-%d')
             
         # 소스별 기사 수 계산
         # 현소스 전부 매일 경제.. 
         source_counts = df['source'].value_counts()
+        sns.set_theme(font=self.font_prop.get_name())
         
         # 그래프 그리기
         plt.figure(figsize=(8, 6))
         sns.barplot(x=source_counts.index, y=source_counts.values) # 내부적으로 활성화된 axes 에 그림
-        plt.title('뉴스 소스별 기사 수', fontsize=15)
+        plt.title(f'뉴스 소스별 기사 수 ({start_date} ~ {end_date})', fontsize=15)
         plt.xlabel('뉴스 소스', fontsize=12)
         plt.ylabel('기사 수', fontsize=12)
         plt.xticks(rotation=45)
@@ -118,9 +145,9 @@ class NewsVisualizer:
         logger.info(f"소스별 분포 그래프 저장 완료: {output_path}")
         return output_path
     
-    def plot_daily_articles(self, df: pd.DataFrame, output_path: str = 'daily_articles.png'):
+    def plot_monthly_articles(self, df: pd.DataFrame, output_path: str = 'daily_articles.png'):
         """
-        일별 기사 수 추이 시각화
+        월별 기사 수 추이 시각화
         
         Args:
             df (pd.DataFrame): 데이터프레임
@@ -132,14 +159,24 @@ class NewsVisualizer:
             
         # 날짜 형식 변환
         df['date'] = pd.to_datetime(df['date'])
+
+        # 월 단위로 자르기
+        df['month'] = df['date'].dt.to_period('M')
+
+        # 전체 월 범위 생성
+        full_month_range = pd.period_range(start=df['month'].min(), end=df['month'].max(), freq='M')
         
-        # 일별 기사 수 계산
-        daily_counts = df.groupby(df['date'].dt.date).size()
+        # 월별 기사 수 계산
+        monthly_counts = df.groupby('month').size()
+        monthly_counts = monthly_counts.reindex(full_month_range, fill_value=0)
+
+        # 인덱스를 datetime으로 변환 (플로팅용)
+        monthly_counts.index = monthly_counts.index.strftime('%Y-%m')
         
         # 그래프 그리기
         plt.figure(figsize=(12, 6))
-        ax = daily_counts.plot(kind='line', marker='o')
-        plt.title('일별 KDX 관련 기사 수', fontsize=15)
+        ax = monthly_counts.plot(kind='bar')
+        plt.title('월별 KDX 관련 기사 수', fontsize=15)
         plt.xlabel('날짜', fontsize=12)
         plt.ylabel('기사 수', fontsize=12)
         plt.grid(True, alpha=0.3) # 격자선 투명도 
@@ -185,8 +222,8 @@ class NewsVisualizer:
             
         # 일별 기사 수
         if 'date' in df.columns:
-            daily_path = os.path.join(output_dir, 'daily_articles.png')
-            results['daily_articles'] = self.plot_daily_articles(df, daily_path)
+            daily_path = os.path.join(output_dir, 'monthly_articles.png')
+            results['monthly_articles'] = self.plot_monthly_articles(df, daily_path)
             
         logger.info(f"모든 시각화 생성 완료: {len(results)}개")
         return results

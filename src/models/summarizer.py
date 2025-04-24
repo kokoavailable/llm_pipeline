@@ -155,8 +155,7 @@ class GPTSummarizer:
         df['keywords'] = ""
 
         for idx, row in df.iterrows():
-            if idx % 5 == 0:
-                logger.info(f"진행 중: {idx}/{len(df)} 기사 처리 완료")
+            logger.info(f"진행 중: {idx}/{len(df)} 기사 처리 완료")
 
             content = row.get('content_clean', row.get('content', ''))
 
@@ -190,13 +189,7 @@ class GPTSummarizer:
             logger.error(f"파일을 찾을 수 없음: {input_path}")
             return None
         
-        if input_path.endswith('.csv'):
-            df = pd.read_csv(input_path)
-        elif input_path.endswith('.json'): 
-            df = pd.read_json(input_path)
-        else:
-            logger.error(f"지원하지 않는 파일 형식: {input_path}")
-            return None
+        df = pd.read_csv(input_path)
         
         # 요약 및 키워드 추출
         result_df = self.process_dataframe(df)
@@ -204,10 +197,11 @@ class GPTSummarizer:
         # 디렉토리가 없으면 생성
         os.makedirs(os.path.dirname(output_path), exist_ok=True)
 
-        if output_path.endswith('.csv'):
-            result_df.to_csv(output_path, index=False, encoding='utf-8-sig')
-        elif output_path.endswith('.json'):
-            result_df.to_json(output_path, orient='records', force_ascii=False, indent=4)
+
+        result_df.to_csv(output_path, index=False, encoding='utf-8-sig')
+        json_path = output_path.replace('.csv', '.json')
+
+        result_df.to_json(json_path, orient='records', force_ascii=False, indent=4)
 
         logger.info(f"요약 결과 저장 완료: {output_path}")
         return result_df

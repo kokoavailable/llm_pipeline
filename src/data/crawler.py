@@ -260,6 +260,8 @@ class NewsCrawler:
                     content = "\n".join(p.get_text(strip=True) for p in paragraphs)
                 else:
                     content = ""
+                    logger.warning(f"[본문 없음] {url}")
+                    logger.debug(f"[응답 HTML 일부]\n{soup.prettify()[:500]}")
 
                 # ───── ③ 날짜 ─────
                 date = soup.select_one("meta[property='article:published_time']")
