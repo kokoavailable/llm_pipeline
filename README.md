@@ -36,11 +36,11 @@
 ```
 # 설치
 
-## 필요 구성
-```
 파이썬 3.9 이상
 Apache Airflow 
 
+## 필요 구성
+```
 annotated-types==0.7.0
 anyio==4.9.0
 appnope==0.1.4
