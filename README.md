@@ -229,11 +229,7 @@ pytest tests/
 아파치 에어플로우를 통해 해당파이프라인의 스케줄링과 의존성 관리 등을 자동화하였습니다.
 
 ## 디렉토리 구조
-<<<<<<< HEAD
 ```
-=======
-
->>>>>>> d3279192eaffdbb5827dd6bce3408b3baa9eca53
 ├── airflow/              # 에어플로우 구성
 │   ├── dags/             # DAG 정의
 │   └── plugins/          # Airflow 플러그인

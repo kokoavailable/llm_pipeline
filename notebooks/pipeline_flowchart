@@ -1,0 +1,13 @@
+// News Summary Pipeline
+digraph {
+	A [label="Airflow 스케줄링
+(자동화 구조)"]
+	B [label="뉴스 크롤링"]
+	C [label="텍스트 전처리"]
+	D [label="NLP 요약 (LLM)"]
+	E [label="시각화 저장"]
+	A -> B
+	B -> C
+	C -> D
+	D -> E
+}
