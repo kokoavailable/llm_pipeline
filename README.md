@@ -145,6 +145,9 @@ pip install -r requirements.txt
 
 
 # 사용
+```
+llm_pipeline/notebooks/
+```
 주피터 노트북 또는 IPython 환경에서 순차적으로 실행합니다.
 
 1. 환경설정
@@ -158,6 +161,7 @@ pip install -r requirements.txt
 
 
 # 설정
+
 
 config/ 디렉토리.
 
