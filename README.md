@@ -252,11 +252,7 @@ pytest tests/
 │   ├── utils/            # 유틸리티 함수
 │   └── visualization/    # 데이터 시각화 코드
 └── tests/                # Test files
-<<<<<<< HEAD
 ```
-=======
-
->>>>>>> d3279192eaffdbb5827dd6bce3408b3baa9eca53
 # 설치
 
 ## 필요 구성
@@ -393,12 +389,12 @@ run_pipeline(config_path="config/crawler_config.DEV.yaml")
 웹서버 사용
 
 ```
-airflow webserver --port 8080
+nohup airflow webserver --port 8080 > webserver.log 2>&1 &
 ```
 
 다른 터미널에서 스케줄러 사용
 
-airflow scheduler
+nohup airflow scheduler > scheduler.log 2>&1 &
 
 ```
 웹 UI http://localhost:8080
