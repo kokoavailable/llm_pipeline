@@ -3,13 +3,22 @@ import logging
 from bs4 import BeautifulSoup
 import pandas as pd
 import os
+from konlpy.tag import Okt
 
-from ..utils.helpers import logger
+from utils.helpers import logger
+from utils.stopwords_kr import stopwords
 class NewsPreprocessor:
     """크롤링한 raw 뉴스 데이터를 전처리하는 클래스"""
     def __init__(self):
         """뉴스 전처리 클래스 초기화"""
+        self.okt = Okt()
+        self.stopwords = stopwords
         pass
+
+    def remove_stopwords(self, text):
+        tokens = self.okt.morphs(text)
+        filtered = [word for word in tokens if word not in self.stopwords]
+        return ' '.join(filtered)
 
     def clean_text(self, text):
         """
@@ -73,10 +82,15 @@ class NewsPreprocessor:
         after = len(processed_df)
         logger.info(f"50자 이하 기사 제거: {before - after}개 제거 → {after}개 남음")
 
+        # 불용어 제거 (content_clean 기준)
+        processed_df['content_nostop'] = processed_df['content_clean'].apply(self.remove_stopwords)
+
 
         # 날짜 형식 통일
         try:
-            processed_df['date'] = pd.to_datetime(processed_df['date']).dt.strftime('%Y-%m-%d')
+            processed_df['date'] = pd.to_datetime(processed_df['date'])
+            processed_df = processed_df.sort_values(by='date')
+            processed_df['date'] = processed_df['date'].dt.strftime('%Y-%m-%d')
         except:
             logger.warning("날짜 형식 변환 오류, 원본 유지")
         

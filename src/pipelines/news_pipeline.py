@@ -6,14 +6,14 @@ import logging
 import argparse
 from datetime import datetime
 
-from data.crawler import NewsCrawler
-from data.preprocessor import NewsPreprocessor
-from models.summarizer import GPTSummarizer
-from visualization.plotter import NewsVisualizer
+from data.news.crawler import NewsCrawler
+from data.news.preprocessor import NewsPreprocessor
+from llm.gpt_summarizer import GPTSummarizer
+from visualization.news.plotter import NewsVisualizer
 from utils.helpers import ensure_directory, get_timestamp, save_results, logger
 
 
-def run_pipeline(config_path=None, output_dir=None):
+def run_news_pipeline(config_path=None, output_dir=None):
     """
     전체 파이프라인 실행
     

@@ -6,7 +6,7 @@ import os
 import sys
 
 # 프로젝트 루트 경로 추가
-PROJECT_ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..'))
+PROJECT_ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..', '..'))
 sys.path.append(PROJECT_ROOT)
 
 from airflow import DAG
@@ -15,10 +15,10 @@ from airflow.operators.bash import BashOperator
 from airflow.utils.dates import days_ago
 
 # 프로젝트 모듈 임포트
-from src.data.crawler import NewsCrawler
-from src.data.preprocessor import NewsPreprocessor
-from src.models.summarizer import GPTSummarizer
-from src.visualization.plotter import NewsVisualizer
+from data.news.crawler import NewsCrawler
+from data.news.preprocessor import NewsPreprocessor
+from llm.gpt_summarizer import GPTSummarizer
+from visualization.news.plotter import NewsVisualizer
 
 # 기본 인수 설정
 default_args = {
@@ -172,3 +172,5 @@ notify_task = PythonOperator(
 
 # 작업 순서 설정
 get_paths_task >> crawl_task >> preprocess_task >> summarize_task >> visualize_task >> notify_task
+
+globals()['dag'] = dag

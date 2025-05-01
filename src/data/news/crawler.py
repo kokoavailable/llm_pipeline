@@ -15,15 +15,13 @@ import urllib.parse
 
 import time
 
-from ..utils.helpers import init_session_with_cookies
+from utils.helpers import init_session_with_cookies, logger
 
 # # 프로젝트 루트 경로 추가 (상대 경로 임포트를 위한 설정)
 # project_root = os.path.abspath(os.path.join(os.getcwd(), '..'))
 # if project_root not in sys.path:
 #     sys.path.append(project_root)
 
-# 모듈화된 코드 임포트
-from ..utils.helpers import logger
 
 
 # 로깅 설정

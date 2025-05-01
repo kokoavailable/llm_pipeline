@@ -11,7 +11,7 @@ import openai
 import textwrap
 from dotenv import load_dotenv
 
-from ..utils.helpers import logger, api_key
+from utils.helpers import logger, api_key
 class GPTSummarizer:
     """GPT를 사용한 텍스트 요약 클래스"""
 
