@@ -17,24 +17,78 @@
 
 ## 디렉토리 구조
 ```
-├── airflow/              # 에어플로우 구성
-│   ├── dags/             # DAG 정의
-│   └── plugins/          # Airflow 플러그인
-├── config/               # 설정 파일
-├── data/                 # 데이터 저장 공간
-│   ├── processed/        # 가공한 데이터
-│   ├── raw/              # 크롤러의 로우데이터
-│   ├── summaries/        # 생성된 본문 요약
-│   └── visualizations/   # 시각화의 결과
-├── docs/                 # 도큐먼트 폴더
-├── logs/                 # 앱 로그
-├── notebooks/            # 분석과 실험을 위한 주피터 노트북
-├── src/                  # 소스 코드
-│   ├── data/             # 데이터 획득 및 처리 모듈
-│   ├── models/           # 요약 모델
-│   ├── utils/            # 유틸리티 함수
-│   └── visualization/    # 데이터 시각화 코드
-└── tests/                # Test files
+├── airflow # 스케줄링 airflow
+│   ├── airflow
+│   │   ├── airflow-webserver.pid
+│   │   ├── airflow.cfg
+│   │   ├── airflow.db
+│   │   └── dags
+│   │       ├── news_summary_dag.py
+│   │       └── stock_prediction_dag.py
+│   ├── airflow.db
+│   ├── plugins
+│   └── webserver_config.py
+├── config
+│   ├── crawler_config.DEV.yaml
+│   └── model_config.yaml
+├── data
+│   ├── processed
+│   │   └── processed_news_articles.csv
+│   ├── raw
+│   │   ├── news_articles.csv
+│   │   ├── news_articles.json
+│   │   ├── news_summaries.csv
+│   │   ├── pipeline_summary.json
+│   │   ├── processed_news_articles.csv
+│   │   └── processed_news_articles.json
+│   ├── runs
+│   ├── summaries
+│   │   ├── news_summaries.csv
+│   │   ├── news_summaries1.csv
+│   │   └── news_summaries1.json
+│   └── visualizations
+│       ├── keywords_wordcloud.png
+│       ├── monthly_articles.png
+│       └── source_distribution.png
+├── dev_run.py # 메인 실행용 스크립트
+├── docs
+├── jobs
+├── logs
+├── notebooks
+│   ├── kdx_news_pipeline.ipynb
+│   ├── pipeline_flowchart
+│   └── pipeline_flowchart.png
+├── requirements.txt
+├── scheduler.log
+├── setup.py
+├── src
+│   ├── data
+│   │   ├── news
+│   │   │   ├── crawler.py
+│   │   │   └── preprocessor.py
+│   │   └── stock
+│   │       ├── loader.py
+│   │       └── preprocessor.py
+│   ├── llm
+│   │   └── gpt_summarizer.py
+│   ├── models
+│   │   ├── gru_model.py
+│   │   └── trainer.py
+│   ├── pipelines
+│   │   ├── news_pipeline.py
+│   │   └── stock_pipeline.py
+│   ├── utils
+│   │   ├── helpers.py
+│   │   └── stopwords_kr.py
+│   └── visualization
+│       ├── news
+│       │   ├── fonts
+│       │   │   └── NanumGothic-Bold.ttf
+│       │   └── plotter.py
+│       └── stock
+│           └── plotter.py
+├── tests
+│   └── test.py
 ```
 # 설치
 
@@ -168,20 +222,32 @@ llm_pipeline/notebooks/
 config/ 디렉토리.
 
 crawler_config.DEV.yaml
+model_config.yaml
 
 # 구성요소
 
 데이터 수집
-src/data/crawler.py 
+src/data/news/crawler.py
+src/data/stock/loader.py 
 
 로우 데이터 전처리 
-src/data/preprocessor.py.
+src/data/news/preprocessor.py
+src/data/stock/preprocessor.py
+
+ML/DL 모델
+src/data/models/gru_model.py
+src/data/models/trainer.py
 
 데이터 요약
-src/models/summarizer.py
+src/llm/gpt_summarizer.py
 
 데이터 시각화
-src/visualization/plotter.py
+src/visualization/news/plotter.py
+src/visualization/stock/plotter.py
+
+설정
+crawler_config.DEV.yaml
+model_config.yaml
 
 # 개발
 ## 추가  개발
