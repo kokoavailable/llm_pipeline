@@ -103,4 +103,4 @@ if __name__ == "__main__":
     
     args = parser.parse_args()
     
-    run_pipeline(args.config, args.output)
+    run_stock_pipeline(args.config, args.output)
