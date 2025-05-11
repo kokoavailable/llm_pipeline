@@ -12,4 +12,4 @@ if __name__ == "__main__":
     # run_news_pipeline(config_path="config/crawler_config.DEV.yaml")
 
     print("📈 주식 파이프라인 시작")
-    run_stock_pipeline(config_path="config/model_config.yaml")
+    run_stock_pipeline(config_path="config/model_config.yaml", output_dir=".")

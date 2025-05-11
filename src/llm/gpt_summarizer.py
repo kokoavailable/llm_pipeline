@@ -22,14 +22,14 @@ class GPTSummarizer:
         Args:
             model (str): 사용할 OpenAI 모델
         """
-        self.model = model
-        self.client = openai.OpenAI(api_key=api_key)
+        self.model = model # 사용할 llm 모델 이름
+        self.client = openai.OpenAI(api_key=api_key) # OpenAI API 클라이언트
 
         if not self.client:
             logger.warning("OpenAI API 키가 설정되지 않았습니다. .env 파일을 확인하세요.")
 
 
-
+    # 기사 요약
     def summarize_text(self, text: str, max_retries: int = 3) -> str:
         """
         텍스트 요약
@@ -42,6 +42,7 @@ class GPTSummarizer:
             str: 요약된 텍스트    
         """
 
+        # 10자 미만이면 요약 스킵
         if not text or len(text.strip()) < 10:
             return ""
         
@@ -64,6 +65,7 @@ class GPTSummarizer:
         
         for attempt in range(max_retries):
             try:
+                # GPT API 호출
                 response = self.client.chat.completions.create(
                     model=self.model,
                     messages=[
@@ -82,6 +84,7 @@ class GPTSummarizer:
             except Exception as e:
                 logger.error(f"요약 생성 중 오류 발생 (시도 {attempt+1}/{max_retries}): {e}")
                 if attempt < max_retries - 1:
+                    # 실패할때마다 기다리는 시간을 2배 늘려가며 시도하는 전략이다.
                     wait_time = 2 ** attempt  # 지수 백오프
                     logger.info(f"{wait_time}초 후 재시도...")
                     time.sleep(wait_time)

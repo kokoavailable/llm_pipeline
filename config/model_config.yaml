@@ -15,7 +15,9 @@ training:
   batch_size: 16
   loss_function: "mean_squared_error"
   optimizer: "adam"
+  hidden_size: 64
   validation_split: 0.2
+  learning_rate: 0.001
   early_stopping:
     patience: 10
     min_delta: 0.01
