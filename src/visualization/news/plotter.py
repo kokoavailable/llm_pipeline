@@ -11,7 +11,7 @@ from collections import Counter
 from typing import List, Dict, Any, Optional, Tuple
 import re
 
-from utils.helpers import logger
+from src.utils.helpers import logger
 
 import matplotlib.font_manager as fm
 
@@ -176,7 +176,7 @@ class NewsVisualizer:
         # 그래프 그리기
         plt.figure(figsize=(12, 6))
         ax = monthly_counts.plot(kind='bar')
-        plt.title('월별 KDX 관련 기사 수', fontsize=15)
+        plt.title('월별 헥토 관련 기사 수', fontsize=15)
         plt.xlabel('날짜', fontsize=12)
         plt.ylabel('기사 수', fontsize=12)
         plt.grid(True, alpha=0.3) # 격자선 투명도 

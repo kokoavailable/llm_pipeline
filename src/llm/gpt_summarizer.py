@@ -1,35 +1,65 @@
 """
-GPT 기반 텍스트 요약 모듈
+LangChain 기반 텍스트 요약 모듈
 """
 import os
 import time
-import json
 import logging
 import pandas as pd
 from typing import List, Dict, Any, Optional
-import openai
-import textwrap
 from dotenv import load_dotenv
 
-from utils.helpers import logger, api_key
-class GPTSummarizer:
-    """GPT를 사용한 텍스트 요약 클래스"""
+from langchain_community.llms import OpenAI
+from langchain_community.chat_models import ChatOpenAI
+from langchain.chains import LLMChain
+from langchain.callbacks.manager import CallbackManager
+from langchain.callbacks.streaming_stdout import StreamingStdOutCallbackHandler
 
-    def __init__(self, model="gpt-4o-mini"):
+from src.utils.helpers import logger, api_key
+from src.llm.base_prompt import BasePromptTemplates
+
+class GPTSummarizer:
+    """LangChain을 사용한 텍스트 요약 클래스"""
+
+    def __init__(self, model_name="gpt-4o-mini", temperature=0.7, max_tokens=300):
         """
         요약기 초기화
 
         Args:
-            model (str): 사용할 OpenAI 모델
+            model_name (str): 사용할 OpenAI 모델
+            temperature (float): 생성 다양성 조절 (0~1)
+            max_tokens (int): 최대 토큰 수
         """
-        self.model = model # 사용할 llm 모델 이름
-        self.client = openai.OpenAI(api_key=api_key) # OpenAI API 클라이언트
+        # 사용자 입력 또는 기본값으로부터 모델 파라미터 설정한다.
+        self.model_name = model_name # 사용할 llm 모델 이름
+        self.temperature = temperature # 생성의 무작위 정도를 조절한다. 0.0은 결정론적이고, 1.0은 무작위적이다.
+        self.max_tokens = max_tokens # 생성응답으로 허용되는 최대 토큰 수이다.
+        
+        # LangChain 모델 초기화
+        try:
+            # 랭체인의 챗 오픈 AI 모델을 사용하여 대화형 모델을 초기화한다.
+            self.chat_model = ChatOpenAI(
+                model_name=model_name,
+                temperature=temperature,
+                max_tokens=max_tokens,
+                openai_api_key=api_key
+            )
+            
+            # 요약에 사용할 프롬프트 템플릿을 불러온다.
+            # 입력 텍스트를 받아 요약하는 형태의 프롬프트.
+            self.summarize_prompt = BasePromptTemplates.get_summarization_template()
+            
+            # 키워트 추출에 사용할 프롬프트 템플릿을 불러온다.
+            # 입력 텍스트를 받아 키워드를 추출하는 형태의 프롬프트.
+            self.keyword_prompt = BasePromptTemplates.get_keyword_extraction_template()
+            
+            # 요약 작업을 위한 llm 체인을 구성한다. 사용할 llm 객체와 프롬프트를 인자로 넣는다.
+            self.summarize_chain = LLMChain(llm=self.chat_model, prompt=self.summarize_prompt)
+            self.keyword_chain = LLMChain(llm=self.chat_model, prompt=self.keyword_prompt)
+            
+        except Exception as e:
+            logger.error(f"LangChain 모델 초기화 중 오류: {e}")
+            raise Exception(f"LangChain 모델 초기화 실패: {e}")
 
-        if not self.client:
-            logger.warning("OpenAI API 키가 설정되지 않았습니다. .env 파일을 확인하세요.")
-
-
-    # 기사 요약
     def summarize_text(self, text: str, max_retries: int = 3) -> str:
         """
         텍스트 요약
@@ -41,47 +71,20 @@ class GPTSummarizer:
         Returns:
             str: 요약된 텍스트    
         """
-
-        # 10자 미만이면 요약 스킵
+        # 텍스트가 비어 있거나 너무 짧은 경우는 추출의 의미가 없으므로 거른다.
         if not text or len(text.strip()) < 10:
             return ""
         
-        # 요약 요청을 위한 시스템 프롬프트
-        system_prompt = textwrap.dedent(f"""
-        당신은 뉴스 기사를 읽고, 핵심 내용을 부드럽고 자연스러운 단락으로 요약하는 AI입니다.
-        요약은 객관적이며 불렛포인트 없이, 사람이 쓴 것처럼 자연스럽게 이어지는 3~4문장으로 작성되어야 합니다.
-        """).strip()
-        
-        # 요약 요청을 위한 사용자 프롬프트
-        user_prompt = textwrap.dedent(f"""
-        다음은 뉴스 기사입니다. 중요한 내용을 중심으로, 자연스럽고 흐름이 끊기지 않는 단락으로 3~4문장 정도로 요약해주세요. 요약은 마치 사람이 쓴 것처럼 자연스럽게 이어지고, 불렛포인트나 나열식 표현 없이 작성되어야 합니다.
-
-        기사 원문:
-        {text}
-
-        요약:
-        """).strip()
-
-        
         for attempt in range(max_retries):
             try:
-                # GPT API 호출
-                response = self.client.chat.completions.create(
-                    model=self.model,
-                    messages=[
-                        {"role": "system", "content": system_prompt},
-                        {"role": "user", "content": user_prompt}
-                    ],
-                    max_tokens=300,
-                    temperature=0.7,
-                    n=1,
-                    stop=None
-                )
+                # LangChain 체인 실행. 프롬프트에 바로 텍스트를 넣어 LLM으로 실행한다.
+                result = self.summarize_chain.run(text=text)
 
-                summary = response.choices[0].message.content.strip()
-                return summary
+                # 결과 앞뒤 공백 제거후 반환
+                return result.strip()
             
             except Exception as e:
+                # 예외 발생 시 로깅하고, 재시도
                 logger.error(f"요약 생성 중 오류 발생 (시도 {attempt+1}/{max_retries}): {e}")
                 if attempt < max_retries - 1:
                     # 실패할때마다 기다리는 시간을 2배 늘려가며 시도하는 전략이다.
@@ -94,44 +97,25 @@ class GPTSummarizer:
     def extract_keywords(self, text: str, max_retries: int = 3) -> List[str]:
         """
         텍스트에서 키워드 추출
+        
         Args:
             text (str): 키워드를 추출할 텍스트
             max_retries (int): 최대 재시도 횟수
+            
         Returns:
             List[str]: 추출된 키워드 목록
         """
-
+        # 텍스트가 비어 있거나 너무 짧은 경우는 추출의 의미가 없으므로 거른다.
         if not text or len(text.strip()) < 10:
             return []
         
-        system_prompt = textwrap.dedent(f"""당신은 뉴스 기사를 읽고, 핵심 키워드를 추출하는 AI입니다.""").strip()
-        
-        user_prompt = textwrap.dedent(f"""다음은 뉴스 기사입니다. 이 기사에서 가장 중요한 핵심 키워드 5개를 추출해주세요.  
-        - 각 키워드는 단어 또는 짧은 구문 형태여야 합니다.  
-        - 키워드 간에는 쉼표(,)로 구분해주세요.  
-        - 불렛포인트나 숫자 없이, 키워드만 한 줄로 출력해주세요.  
-        - 문장은 작성하지 마세요.  
-
-        기사 내용:  
-        {text}
-
-        결과:
-        """).strip()
-
         for attempt in range(max_retries):
             try:
-                response = self.client.chat.completions.create(
-                    model=self.model,
-                    messages=[
-                        {"role": "system", "content": system_prompt},
-                        {"role": "user", "content": user_prompt}
-                    ],
-                    temperature=0.3,
-                    max_tokens=100
-                )
-
-                keywords_text = response.choices[0].message.content.strip()
-
+                # LangChain 체인 키워드 프롬프트를 실행.
+                result = self.keyword_chain.run(text=text)
+                
+                # 결과 처리
+                keywords_text = result.strip()
                 keywords = [k.strip() for k in keywords_text.split(',')]
                 return keywords
             
@@ -154,10 +138,11 @@ class GPTSummarizer:
         Returns:
             pd.DataFrame: 요약 및 키워드가 추가된 DataFrame
         """
-        df['summary'] = ""
-        df['keywords'] = ""
+        df['summary'] = "" # 요약 결과 저장용 컬럼 추가
+        df['keywords'] = "" # 키워드 결과 저장용 컬럼 추가
 
-        for idx, row in df.iterrows():
+        # 행단위 반복
+        for idx, row in df.iterrows(): 
             logger.info(f"진행 중: {idx}/{len(df)} 기사 처리 완료")
 
             content = row.get('content_clean', row.get('content', ''))
@@ -192,6 +177,7 @@ class GPTSummarizer:
             logger.error(f"파일을 찾을 수 없음: {input_path}")
             return None
         
+        # 입력 파일로드
         df = pd.read_csv(input_path)
         
         # 요약 및 키워드 추출
@@ -199,7 +185,6 @@ class GPTSummarizer:
 
         # 디렉토리가 없으면 생성
         os.makedirs(os.path.dirname(output_path), exist_ok=True)
-
 
         result_df.to_csv(output_path, index=False, encoding='utf-8-sig')
         json_path = output_path.replace('.csv', '.json')

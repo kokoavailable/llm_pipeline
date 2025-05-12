@@ -13,7 +13,7 @@ class StockDataLoader:
         self.ticker_symbol = self.config["model"]["ticker"]
         
     def load_data(self):
-        """주식 데이터를 로드하고 이동평균을 계산합니다."""
+        """주식 데이터를 로드하고 이동평균을 계산"""
         ticker = yf.Ticker(self.ticker_symbol)
         raw_df = ticker.history(period="max", auto_adjust=False)
         
@@ -24,7 +24,7 @@ class StockDataLoader:
         return raw_df
     
     def save_raw_data(self, df, output_dir):
-        """원시 데이터를 저장합니다."""
+        """원시 데이터를 저장"""
         os.makedirs(output_dir, exist_ok=True)
         df.to_csv(os.path.join(output_dir, f"{self.ticker_symbol}_stock_data.csv"))
         return os.path.join(output_dir, f"{self.ticker_symbol}_stock_data.csv")

@@ -109,6 +109,8 @@ class StockDataPreprocessor:
         """
         os.makedirs(output_dir, exist_ok=True)
         
+        # 넘파이 배열을 바이너리 형식으로 저장한다.
+        # 모델 학습시 필요한 데이터들을 사용하여, 기록을 보존한다.
         np.save(os.path.join(output_dir, "x_train.npy"), x_train)
         np.save(os.path.join(output_dir, "y_train.npy"), y_train)
         np.save(os.path.join(output_dir, "x_test.npy"), x_test)
